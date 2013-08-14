@@ -1,0 +1,40 @@
+{
+  "devMode": true,
+  "experimental": true,
+  "authorNick": "huseyinalb",
+  "multiple": false,
+  "background": false,
+  "hiddenHandle": false,
+  "forceUpdate": false,
+  "openWith": "lastActive",
+  "behavior": "fullApp",
+  "version": "0.1",
+  "name": "GoIDE",
+  "identifier": "com.koding.apps.goide",
+  "path": "~/Applications/GoIDE.kdapp",
+  "homepage": "huseyinalb.localhost/goide",
+  "author": "Huseyin Oguz Albayrak",
+  "repository": "git://github.com/huseyinalb/GoIDE.kdapp.git",
+  "description": "GoIDE : a Koding application created with the blank template.",
+  "category": "web-app",
+  "source": {
+    "blocks": {
+      "app": {
+        "files": [
+          "./index.coffee"
+        ]
+      }
+    },
+    "stylesheets": [
+      "./resources/style.css"
+    ]
+  },
+  "options": {
+    "type": "tab"
+  },
+  "icns": {
+  },
+  "screenshots": [],
+  "menu": [],
+  "fileTypes": []
+}
