@@ -30,7 +30,7 @@ options =
             if filepath isnt null
               filecontent = panel.getPaneByName('editor').getActivePaneContent()
               if (filecontent.indexOf 'package main') isnt -1 
-                panel.panes[2].runCommand("go run #{filepath}")
+                panel.getPaneByName("terminal").runCommand("go run #{filepath}")
             else
               console.log("untitled!")
         }
