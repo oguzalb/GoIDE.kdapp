@@ -54,7 +54,6 @@ options =
                 name         : "editor"
                 saveCallback : (panel, workspace, file, content) -> 
                   log panel, workspace, file, content
-                  debugger
                   filepath = getActiveFilePath panel
                   if filepath isnt null
                     # TODO we may show the user what is going on, or may be not
