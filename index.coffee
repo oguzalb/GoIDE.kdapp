@@ -3,6 +3,22 @@ getActiveFilePath = (panel) ->
   if (rawpath.indexOf "localfile:/") isnt 0
     return rawpath.replace /[^/]*/, ""
   return null
+createPlayGolang = (filecontent, callback) ->
+  {nickname} = KD.whoami().profile
+  kite    = KD.getSingleton 'kiteController'
+  kite.run "mkdir -p ~/.GoIDE", (err, res) ->
+    
+    tmpFile = "/home/#{nickname}/.GoIDE/.playgolang.tmp"
+    
+    tmp = FSHelper.createFileFromPath tmpFile
+    filecontent = filecontent.replace /\n/g, "\r\n"
+    tmp.save filecontent, (err, res)->
+      return if err
+      
+      kite.run "curl -kLss -A\"Koding\" -X POST http://play.golang.org/share --data @#{tmpFile}", (err, res)->
+        KD.enableLogs()
+        console.log err, res
+        callback err, res
 
 createGist = (filecontent, filename, callback) ->
   
@@ -18,9 +34,9 @@ createGist = (filecontent, filename, callback) ->
       "index.coffee": {content: filecontent}
 
   kite    = KD.getSingleton 'kiteController'
-  kite.run "mkdir -p ~/.kodepad", (err, res) ->
+  kite.run "mkdir -p ~/.GoIDE", (err, res) ->
     
-    tmpFile = "/home/#{nickname}/.kodepad/.gist.tmp"
+    tmpFile = "/home/#{nickname}/.GoIDE/.gist.tmp"
     
     tmp = FSHelper.createFileFromPath tmpFile
     tmp.save JSON.stringify(gist), (err, res)->
@@ -82,7 +98,7 @@ options =
               filecontent = panel.getPaneByName('editor').getActivePaneContent()
               filename = filepath.match("([^/]*$)")
               new KDNotificationView 
-                title: "Kodepad is creating your Gist..."
+                title: "GoIDE is creating your Gist..."
               createGist filecontent, filename, (err, res)->
                 if err
                   new KDNotificationView 
@@ -100,6 +116,38 @@ options =
                       cssClass: "modal-clean-green"
                       callback: ->
                         window.open res.html_url, "_blank"
+              
+            else
+              console.log("untitled!")
+        }
+        {
+          title      : "PlayGolang Share"
+          cssClass   : "clean-gray"
+          callback   : (panel, workspace) =>
+            filepath = getActiveFilePath panel
+            if filepath isnt null
+              filecontent = panel.getPaneByName('editor').getActivePaneContent()
+              filename = filepath.match("([^/]*$)")
+              new KDNotificationView 
+                title: "GoIDE is creating your code share..."
+              createPlayGolang filecontent, (err, res)->
+                if err
+                  new KDNotificationView 
+                    title: "An error occured while creating code share, try again."
+                url = "http://play.golang.org/p/" + res
+                modal = new KDModalView
+                  overlay : yes
+                  title     : "Your code share is ready!"
+                  content   : """
+                                  <div class='modalformline'>
+                                    <p><b>#{url}</b></p>
+                                  </div>
+                              """
+                  buttons     :
+                    "Open Play Golang Share":
+                      cssClass: "modal-clean-green"
+                      callback: ->
+                        window.open url, "_blank"
               
             else
               console.log("untitled!")
