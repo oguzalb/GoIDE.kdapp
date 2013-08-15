@@ -34,6 +34,17 @@ options =
             else
               console.log("untitled!")
         }
+        {
+          title      : "Go Test"
+          cssClass   : "clean-gray"
+          callback   : (panel, workspace) =>
+            filepath = getActiveFilePath panel
+            if filepath isnt null
+              if filepath.match(".*_test.go") 
+                panel.getPaneByName("terminal").runCommand("go test #{filepath}")
+            else
+              console.log("not a test file!")
+        }
       ]
       layout            : {
         direction       : "vertical"
@@ -81,4 +92,3 @@ options =
 
 goIDE = new CollaborativeWorkspace options
 appView.addSubView goIDE
-
