@@ -4,6 +4,34 @@ getActiveFilePath = (panel) ->
     return rawpath.replace /[^/]*/, ""
   return null
 
+createGist = (filecontent, filename, callback) ->
+  
+  {nickname} = KD.whoami().profile
+  
+  gist = 
+    description: """
+    Kodepad Gist Share by #{nickname} on http://koding.com
+    Author: http://#{nickname}.koding.com
+    """
+    public: yes
+    files:
+      "index.coffee": {content: filecontent}
+
+  kite    = KD.getSingleton 'kiteController'
+  kite.run "mkdir -p ~/.kodepad", (err, res) ->
+    
+    tmpFile = "/home/#{nickname}/.kodepad/.gist.tmp"
+    
+    tmp = FSHelper.createFileFromPath tmpFile
+    tmp.save JSON.stringify(gist), (err, res)->
+      return if err
+      
+      kite.run "curl -kLss -A\"Koding\" -X POST https://api.github.com/gists --data @#{tmpFile}", (err, res)->
+        KD.enableLogs()
+        console.log err, res
+        callback err, JSON.parse(res)
+        #kite.run "rm -f #{tmpFile}"
+  
 options =
   name               : "Go IDE"
   version            : "0.1"
@@ -44,6 +72,37 @@ options =
                 panel.getPaneByName("terminal").runCommand("go test #{filepath}")
             else
               console.log("not a test file!")
+        }
+        {
+          title      : "Gist Share"
+          cssClass   : "clean-gray"
+          callback   : (panel, workspace) =>
+            filepath = getActiveFilePath panel
+            if filepath isnt null
+              filecontent = panel.getPaneByName('editor').getActivePaneContent()
+              filename = filepath.match("([^/]*$)")
+              new KDNotificationView 
+                title: "Kodepad is creating your Gist..."
+              createGist filecontent, filename, (err, res)->
+                if err
+                  new KDNotificationView 
+                    title: "An error occured while creating gist, try again."
+                modal = new KDModalView
+                  overlay : yes
+                  title     : "Your Gist is ready!"
+                  content   : """
+                                  <div class='modalformline'>
+                                    <p><b>#{res.html_url}</b></p>
+                                  </div>
+                              """
+                  buttons     :
+                    "Open Gist":
+                      cssClass: "modal-clean-green"
+                      callback: ->
+                        window.open res.html_url, "_blank"
+              
+            else
+              console.log("untitled!")
         }
       ]
       layout            : {
