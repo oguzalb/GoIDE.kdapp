@@ -1,8 +1,3 @@
-getSampleCode = (name) ->
-  for vals in sampleCodes
-    if vals[0] is name
-      return vals[1]
-
 sampleCodes = [
   ["Select", """"""]
   ["Hello World", """package main
@@ -223,7 +218,7 @@ options =
                     # TODO we may show the user what is going on, or may be not
                     # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
                     KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
-                      makeButtonControls(panel)
+                      makeButtonControls(goIDE, panel)
                       {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
                       
                       file = FSHelper.createFileFromPath filepath
@@ -249,16 +244,16 @@ getButtonByIndex = (workspace, index) ->
   buttons = workspace.panels[0].header
   return buttons.subViews[index]
 
-makeButtonControls = (panel) ->
+makeButtonControls = (workspace, panel) ->
   filepath = getActiveFilePath panel
-  testButton = getButtonByIndex(goIDE, 2)
+  testButton = getButtonByIndex(workspace, 2)
   if filepath isnt null and filepath.match(".*_test.go")
     testButton.show()
   else
     testButton.hide()
   filecontent = panel.getPaneByName('editor').getActivePaneContent()
-  runButton = getButtonByIndex(goIDE, 1)
-  if (filecontent.indexOf 'package main') isnt -1
+  runButton = getButtonByIndex(workspace, 1)
+  if filepath isnt null and (filecontent.indexOf 'package main') isnt -1
     runButton.show()
   else
     runButton.hide()
@@ -274,6 +269,6 @@ goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
   tabView.on "PaneDidShow", (tabPane) ->
     # TODO should be fixed
     KD.utils.wait 1000, ->
-      makeButtonControls(panel)
+      makeButtonControls(goIDE, panel)
 
 appView.addSubView goIDE
