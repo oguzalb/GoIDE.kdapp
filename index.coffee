@@ -192,10 +192,10 @@ options =
           callback: () =>
             selectBox = getButtonByIndex goIDE, 5
             content = selectBox.getValue()
-            filepath = "localfile:/hede.go"
+            filepath = "localfile:/untitled.go"
             file = FSHelper.createFile {type: "file", path: filepath}
             editor = goIDE.panels[0].getPaneByName("editor")
-            editor.openFile(file, "asd")
+            editor.openFile(file, null)
             cmEditor = editor.getActivePane().subViews[0].codeMirrorEditor
             cmEditor.setValue content
         }
