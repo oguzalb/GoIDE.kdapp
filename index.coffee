@@ -12,7 +12,7 @@ import (
 )
 
 main() {
-	fmt.Println("Hello world!")
+  fmt.Println("Hello world!")
 }"""],
   ["Strings", """package main
 
@@ -223,6 +223,7 @@ options =
                     # TODO we may show the user what is going on, or may be not
                     # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
                     KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
+                      makeButtonControls(panel)
                       {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
                       
                       file = FSHelper.createFileFromPath filepath
@@ -248,6 +249,20 @@ getButtonByIndex = (workspace, index) ->
   buttons = workspace.panels[0].header
   return buttons.subViews[index]
 
+makeButtonControls = (panel) ->
+  filepath = getActiveFilePath panel
+  testButton = getButtonByIndex(goIDE, 2)
+  if filepath isnt null and filepath.match(".*_test.go")
+    testButton.show()
+  else
+    testButton.hide()
+  filecontent = panel.getPaneByName('editor').getActivePaneContent()
+  runButton = getButtonByIndex(goIDE, 1)
+  if (filecontent.indexOf 'package main') isnt -1
+    runButton.show()
+  else
+    runButton.hide()
+
 goIDE = new CollaborativeWorkspace options
 goIDE.on "PanelCreated", ->
   getButtonByIndex(goIDE, 2).hide()
@@ -259,17 +274,6 @@ goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
   tabView.on "PaneDidShow", (tabPane) ->
     # TODO should be fixed
     KD.utils.wait 1000, ->
-      filepath = getActiveFilePath panel
-      testButton = getButtonByIndex(goIDE, 2)
-      if filepath isnt null and filepath.match(".*_test.go")
-        testButton.show()
-      else
-        testButton.hide()
-      filecontent = panel.getPaneByName('editor').getActivePaneContent()
-      runButton = getButtonByIndex(goIDE, 1)
-      if (filecontent.indexOf 'package main') isnt -1
-        runButton.show()
-      else
-        runButton.hide()
+      makeButtonControls(panel)
 
 appView.addSubView goIDE
