@@ -1,9 +1,40 @@
+sampleCodesItems = [
+  ["Select", ""]
+  ["Hello World", "helloworld"],
+  ["Strings", "strings"]
+]
+
+sampleCodesData = {
+  "helloworld": """package main
+
+import (
+  "fmt"
+)
+
+func main() {
+  fmt.Println("Hello world!")
+}""",
+  "strings":"""package main
+
+import (
+  "fmt"
+  "strings"
+)
+
+func main() {
+	fmt.Println(strings.Contains("seafood", "foo"))
+	fmt.Println(strings.Contains("seafood", "bar"))
+	fmt.Println(strings.Contains("seafood", ""))
+	fmt.Println(strings.Contains("", ""))
+}"""
+}
 getActiveFilePath = (panel) ->
   rawpath = panel.getPaneByName("editor").getActivePaneFileData().path
   if (rawpath.indexOf "localfile:/") isnt 0
     return rawpath.replace /[^/]*/, ""
   return null
-createPlayGolang = (filecontent, callback) ->
+
+createPlayGolangShare = (filecontent, callback) ->
   {nickname} = KD.whoami().profile
   kite    = KD.getSingleton 'kiteController'
   kite.run "mkdir -p ~/.GoIDE", (err, res) ->
@@ -11,11 +42,11 @@ createPlayGolang = (filecontent, callback) ->
     tmpFile = "/home/#{nickname}/.GoIDE/.playgolang.tmp"
     
     tmp = FSHelper.createFileFromPath tmpFile
-    filecontent = filecontent.replace /\n/g, "\r\n"
+    filecontent = filecontent.replace /\n/g, "\n\r"
     tmp.save filecontent, (err, res)->
       return if err
       
-      kite.run "curl -kLss -A\"Koding\" -X POST http://play.golang.org/share --data @#{tmpFile}", (err, res)->
+      kite.run "curl -kLss -X POST http://play.golang.org/share --data @#{tmpFile}", (err, res)->
         KD.enableLogs()
         console.log err, res
         callback err, res
@@ -67,7 +98,7 @@ options =
             workspace.showJoinModal()
         }
         {
-          title      : "Go Run"
+          title      : "Run"
           cssClass   : "clean-gray"
           callback   : (panel, workspace) =>
             filepath = getActiveFilePath panel
@@ -79,13 +110,27 @@ options =
               console.log("untitled!")
         }
         {
-          title      : "Go Test"
+          title      : "Test"
           cssClass   : "clean-gray"
           callback   : (panel, workspace) =>
             filepath = getActiveFilePath panel
             if filepath isnt null
-              if filepath.match(".*_test.go") 
+              if filepath.match(".*_test.go")
                 panel.getPaneByName("terminal").runCommand("go test #{filepath}")
+            else
+              console.log("not a test file!")
+        }
+        {
+          title      : "Build"
+          cssClass   : "clean-gray"
+          callback   : (panel, workspace) =>
+            filepath = getActiveFilePath panel
+            if filepath isnt null
+              if filepath.match(".*.go")
+                path = filepath.match("^(.+)/[^/]+$")[1]
+                panel.getPaneByName("terminal").runCommand("cd #{path}")
+                panel.getPaneByName("terminal").runCommand("go get -v -d .")
+                panel.getPaneByName("terminal").runCommand("go build #{filepath}")
             else
               console.log("not a test file!")
         }
@@ -130,7 +175,7 @@ options =
               filename = filepath.match("([^/]*$)")
               new KDNotificationView 
                 title: "GoIDE is creating your code share..."
-              createPlayGolang filecontent, (err, res)->
+              createPlayGolangShare filecontent, (err, res)->
                 if err
                   new KDNotificationView 
                     title: "An error occured while creating code share, try again."
@@ -152,6 +197,30 @@ options =
             else
               console.log("untitled!")
         }
+        {
+          itemClass: KDSelectBox
+          title: "examplesSelect"
+          defaultValue: sampleCodesItems[0][1]
+          cssClass: 'fr'
+          selectOptions: {title: item[0], value: item[1]} for item in sampleCodesItems
+          callback: () =>
+            debugger
+            selectBox = getButtonByTitle goIDE, "examplesSelect"
+            #default
+            if selectBox.getValue() is ""
+              return
+            value = selectBox.getValue()
+            kite    = KD.getSingleton 'kiteController'
+            {nickname} = KD.whoami().profile
+            examplesPath = "/home/#{nickname}/Documents/go-examples/"
+            kite.run "mkdir -p #{examplesPath}", (err, res) ->
+              sampleFileName = examplesPath + value + ".go"
+              file = FSHelper.createFileFromPath sampleFileName
+              file.save sampleCodesData[value], (err, res)->
+                return if err
+                editor = goIDE.panels[0].getPaneByName("editor")
+                editor.openFile(file, sampleCodesData[value])
+        }
       ]
       layout            : {
         direction       : "vertical"
@@ -171,12 +240,12 @@ options =
                 type         : "tabbedEditor"
                 name         : "editor"
                 saveCallback : (panel, workspace, file, content) -> 
-                  log panel, workspace, file, content
                   filepath = getActiveFilePath panel
                   if filepath isnt null
                     # TODO we may show the user what is going on, or may be not
                     # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
                     KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
+                      makeButtonControls(goIDE, panel)
                       {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
                       
                       file = FSHelper.createFileFromPath filepath
@@ -196,6 +265,50 @@ options =
       }
     }
   ]
+  
+getButtonByTitle = (workspace, title) ->
+  # getButtonByName would be better
+  panel = workspace.panels[0]
+  return panel.headerButtons[title]
+
+makeButtonControls = (workspace, panel) ->
+  filepath = getActiveFilePath panel
+  testButton = getButtonByTitle(workspace, "Test")
+  if filepath isnt null and filepath.match(".*_test.go")
+    testButton.show()
+  else
+    testButton.hide()
+  filecontent = panel.getPaneByName('editor').getActivePaneContent()
+  runButton = getButtonByTitle(workspace, "Run")
+  if filepath isnt null and (filecontent.indexOf 'package main') isnt -1
+    runButton.show()
+  else
+    runButton.hide()
+  buildButton = getButtonByTitle(workspace, "Build")
+  if filepath.match(".*.go")
+    buildButton.show()
+  else
+    buildButton.hide()
+  selectBox = getButtonByTitle(workspace, "examplesSelect")
+  if filepath.match(".*.go")
+    buildButton.show()
+  else
+    buildButton.hide()
 
 goIDE = new CollaborativeWorkspace options
+goIDE.on "PanelCreated", ->
+  debugger
+  getButtonByTitle(goIDE, "Test").hide()
+  getButtonByTitle(goIDE, "Run").hide()
+  getButtonByTitle(goIDE, "Build").hide()
+  getButtonByTitle(goIDE, "Gist Share").hide()
+  getButtonByTitle(goIDE, "PlayGolang Share").hide()
+
+goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
+  tabView = panel.getPaneByName("editor").tabView
+  tabView.on "PaneDidShow", (tabPane) ->
+    # TODO should be fixed
+    KD.utils.wait 1000, ->
+      makeButtonControls(goIDE, panel)
+
 appView.addSubView goIDE
