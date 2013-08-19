@@ -28,11 +28,13 @@ func main() {
 	fmt.Println(strings.Contains("", ""))
 }"""
 }
+
 getActiveFilePath = (panel) ->
-  rawpath = panel.getPaneByName("editor").getActivePaneFileData().path
-  if (rawpath.indexOf "localfile:/") isnt 0
-    return rawpath.replace /[^/]*/, ""
-  return null
+  activePaneFileData = panel.getPaneByName("editor").getActivePaneFileData()
+  return unless activePaneFileData
+  
+  {path} = activePaneFileData
+  return if path.indexOf "localfile:/" isnt 0 then path.replace /[^/]*/, "" else null
 
 createPlayGolangShare = (filecontent, callback) ->
   {nickname} = KD.whoami().profile
@@ -90,6 +92,7 @@ options =
   panels             : [
     {
       title          : "Go IDE"
+      hint           : "<p>This is an IDE for GO lang.</p>"
       buttons        : [
         {
           title      : "Join"
@@ -273,6 +276,7 @@ getButtonByTitle = (workspace, title) ->
 
 makeButtonControls = (workspace, panel) ->
   filepath = getActiveFilePath panel
+  return unless filepath
   testButton = getButtonByTitle(workspace, "Test")
   if filepath isnt null and filepath.match(".*_test.go")
     testButton.show()
@@ -297,7 +301,6 @@ makeButtonControls = (workspace, panel) ->
 
 goIDE = new CollaborativeWorkspace options
 goIDE.on "PanelCreated", ->
-  debugger
   getButtonByTitle(goIDE, "Test").hide()
   getButtonByTitle(goIDE, "Run").hide()
   getButtonByTitle(goIDE, "Build").hide()
@@ -305,10 +308,13 @@ goIDE.on "PanelCreated", ->
   getButtonByTitle(goIDE, "PlayGolang Share").hide()
 
 goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
-  tabView = panel.getPaneByName("editor").tabView
+  {tabView} = panel.getPaneByName "editor"
+  tabView.on "PaneAdded", (paneInstance) ->
+    [editor] = paneInstance.getSubViews()
+    editor.on "OpenedAFile", (file, content) ->
+      makeButtonControls goIDE, panel
+      
   tabView.on "PaneDidShow", (tabPane) ->
-    # TODO should be fixed
-    KD.utils.wait 1000, ->
-      makeButtonControls(goIDE, panel)
+    makeButtonControls(goIDE, panel)
 
 appView.addSubView goIDE
