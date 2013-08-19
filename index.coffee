@@ -117,6 +117,20 @@ options =
               console.log("not a test file!")
         }
         {
+          title      : "Go Build"
+          cssClass   : "clean-gray"
+          callback   : (panel, workspace) =>
+            filepath = getActiveFilePath panel
+            if filepath isnt null
+              if filepath.match(".*.go")
+                path = filepath.match("^(.+)/[^/]+$")[1]
+                panel.getPaneByName("terminal").runCommand("cd #{path}")
+                panel.getPaneByName("terminal").runCommand("go get -v -d .")
+                panel.getPaneByName("terminal").runCommand("go build #{filepath}")
+            else
+              console.log("not a test file!")
+        }
+        {
           title      : "Gist Share"
           cssClass   : "clean-gray"
           callback   : (panel, workspace) =>
@@ -185,7 +199,7 @@ options =
           cssClass: 'fr'
           selectOptions: {title: item[0], value: item[1]} for item in sampleCodes
           callback: () =>
-            selectBox = getButtonByIndex goIDE, 5
+            selectBox = getButtonByIndex goIDE, 6
             content = selectBox.getValue()
             filepath = "localfile:/untitled.go"
             file = FSHelper.createFile {type: "file", path: filepath}
@@ -257,12 +271,25 @@ makeButtonControls = (workspace, panel) ->
     runButton.show()
   else
     runButton.hide()
+  buildButton = getButtonByIndex(workspace, 3)
+  if filepath.match(".*.go")
+    buildButton.show()
+  else
+    buildButton.hide()
+  selectBox = getButtonByIndex(workspace, 6)
+  if filepath.match(".*.go")
+    buildButton.show()
+  else
+    buildButton.hide()
 
 goIDE = new CollaborativeWorkspace options
 goIDE.on "PanelCreated", ->
   getButtonByIndex(goIDE, 2).hide()
   getButtonByIndex(goIDE, 1).hide()
+  getButtonByIndex(goIDE, 3).hide()
   getButtonByIndex(goIDE, 4).hide()
+  getButtonByIndex(goIDE, 5).hide()
+  getButtonByIndex(goIDE, 6).hide()
 
 goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
   tabView = panel.getPaneByName("editor").tabView
