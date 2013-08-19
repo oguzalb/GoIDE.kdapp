@@ -1,19 +1,24 @@
-sampleCodes = [
-  ["Select", """"""]
-  ["Hello World", """package main
+sampleCodesItems = [
+  ["Select", ""]
+  ["Hello World", "helloworld"],
+  ["Strings", "strings"]
+]
+
+sampleCodesData = {
+  "helloworld": """package main
 
 import (
   "fmt"
 )
 
-main() {
+func main() {
   fmt.Println("Hello world!")
-}"""],
-  ["Strings", """package main
+}""",
+  "strings":"""package main
 
 import (
   "fmt"
-	"strings"
+  "strings"
 )
 
 func main() {
@@ -21,9 +26,8 @@ func main() {
 	fmt.Println(strings.Contains("seafood", "bar"))
 	fmt.Println(strings.Contains("seafood", ""))
 	fmt.Println(strings.Contains("", ""))
-}"""]
-]
-
+}"""
+}
 getActiveFilePath = (panel) ->
   rawpath = panel.getPaneByName("editor").getActivePaneFileData().path
   if (rawpath.indexOf "localfile:/") isnt 0
@@ -94,7 +98,7 @@ options =
             workspace.showJoinModal()
         }
         {
-          title      : "Go Run"
+          title      : "Run"
           cssClass   : "clean-gray"
           callback   : (panel, workspace) =>
             filepath = getActiveFilePath panel
@@ -106,7 +110,7 @@ options =
               console.log("untitled!")
         }
         {
-          title      : "Go Test"
+          title      : "Test"
           cssClass   : "clean-gray"
           callback   : (panel, workspace) =>
             filepath = getActiveFilePath panel
@@ -117,7 +121,7 @@ options =
               console.log("not a test file!")
         }
         {
-          title      : "Go Build"
+          title      : "Build"
           cssClass   : "clean-gray"
           callback   : (panel, workspace) =>
             filepath = getActiveFilePath panel
@@ -195,18 +199,27 @@ options =
         }
         {
           itemClass: KDSelectBox
-          defaultValue: sampleCodes[0][1]
+          title: "examplesSelect"
+          defaultValue: sampleCodesItems[0][1]
           cssClass: 'fr'
-          selectOptions: {title: item[0], value: item[1]} for item in sampleCodes
+          selectOptions: {title: item[0], value: item[1]} for item in sampleCodesItems
           callback: () =>
-            selectBox = getButtonByIndex goIDE, 6
-            content = selectBox.getValue()
-            filepath = "localfile:/untitled.go"
-            file = FSHelper.createFile {type: "file", path: filepath}
-            editor = goIDE.panels[0].getPaneByName("editor")
-            editor.openFile(file, null)
-            cmEditor = editor.getActivePane().subViews[0].codeMirrorEditor
-            cmEditor.setValue content
+            debugger
+            selectBox = getButtonByTitle goIDE, "examplesSelect"
+            #default
+            if selectBox.getValue() is ""
+              return
+            value = selectBox.getValue()
+            kite    = KD.getSingleton 'kiteController'
+            {nickname} = KD.whoami().profile
+            examplesPath = "/home/#{nickname}/Documents/go-examples/"
+            kite.run "mkdir -p #{examplesPath}", (err, res) ->
+              sampleFileName = examplesPath + value + ".go"
+              file = FSHelper.createFileFromPath sampleFileName
+              file.save sampleCodesData[value], (err, res)->
+                return if err
+                editor = goIDE.panels[0].getPaneByName("editor")
+                editor.openFile(file, sampleCodesData[value])
         }
       ]
       layout            : {
@@ -253,30 +266,30 @@ options =
     }
   ]
   
-getButtonByIndex = (workspace, index) ->
+getButtonByTitle = (workspace, title) ->
   # getButtonByName would be better
-  buttons = workspace.panels[0].header
-  return buttons.subViews[index]
+  panel = workspace.panels[0]
+  return panel.headerButtons[title]
 
 makeButtonControls = (workspace, panel) ->
   filepath = getActiveFilePath panel
-  testButton = getButtonByIndex(workspace, 2)
+  testButton = getButtonByTitle(workspace, "Test")
   if filepath isnt null and filepath.match(".*_test.go")
     testButton.show()
   else
     testButton.hide()
   filecontent = panel.getPaneByName('editor').getActivePaneContent()
-  runButton = getButtonByIndex(workspace, 1)
+  runButton = getButtonByTitle(workspace, "Run")
   if filepath isnt null and (filecontent.indexOf 'package main') isnt -1
     runButton.show()
   else
     runButton.hide()
-  buildButton = getButtonByIndex(workspace, 3)
+  buildButton = getButtonByTitle(workspace, "Build")
   if filepath.match(".*.go")
     buildButton.show()
   else
     buildButton.hide()
-  selectBox = getButtonByIndex(workspace, 6)
+  selectBox = getButtonByTitle(workspace, "examplesSelect")
   if filepath.match(".*.go")
     buildButton.show()
   else
@@ -284,12 +297,12 @@ makeButtonControls = (workspace, panel) ->
 
 goIDE = new CollaborativeWorkspace options
 goIDE.on "PanelCreated", ->
-  getButtonByIndex(goIDE, 2).hide()
-  getButtonByIndex(goIDE, 1).hide()
-  getButtonByIndex(goIDE, 3).hide()
-  getButtonByIndex(goIDE, 4).hide()
-  getButtonByIndex(goIDE, 5).hide()
-  getButtonByIndex(goIDE, 6).hide()
+  debugger
+  getButtonByTitle(goIDE, "Test").hide()
+  getButtonByTitle(goIDE, "Run").hide()
+  getButtonByTitle(goIDE, "Build").hide()
+  getButtonByTitle(goIDE, "Gist Share").hide()
+  getButtonByTitle(goIDE, "PlayGolang Share").hide()
 
 goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
   tabView = panel.getPaneByName("editor").tabView
