@@ -276,7 +276,10 @@ goIDE.on "PanelCreated", ->
   getButtonByTitle(goIDE, "PlayGolang Share").hide()
 
 goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
-  {tabView} = panel.getPaneByName "editor"
+  editor = panel.getPaneByName("editor")
+  {codeMirrorEditor} = editor.getActivePane().subViews[0]
+  codeMirrorEditor.getWrapperElement().style.fontSize = "12px"
+  {tabView} = editor
   tabView.on "PaneAdded", (paneInstance) ->
     [editor] = paneInstance.getSubViews()
     editor.on "OpenedAFile", (file, content) ->
@@ -286,3 +289,5 @@ goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
     makeButtonControls(goIDE, panel)
 
 appView.addSubView goIDE
+
+
