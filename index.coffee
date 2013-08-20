@@ -177,7 +177,7 @@ options =
           cssClass: 'fr goide-examples'
           selectOptions: {title: item[0], value: item[1]} for item in sampleCodesItems
           callback: () =>
-            selectBox = getButtonByTitle goIDE, "examplesSelect"
+            selectBox = goIDE.getButtonByTitle "examplesSelect"
             #default
             if selectBox.getValue() is ""
               return
@@ -217,7 +217,7 @@ options =
                     # TODO we may show the user what is going on, or may be not
                     # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
                     KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
-                      makeButtonControls(goIDE, panel)
+                      goIDE.makeButtonControls(panel)
                       {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
                       oldCursor = codeMirrorEditor.getCursor()
                       file = FSHelper.createFileFromPath filepath
@@ -238,50 +238,50 @@ options =
       }
     }
   ]
+
+class GoIDEWorkspace extends CollaborativeWorkspace
+  constructor: (options, data) ->
+    super(options, data)
+    @on "PanelCreated", ->
+      hideAtFirstList = ["Test", "Run", "Build", "PlayGolang Share"]
+      for button in hideAtFirstList
+        @getButtonByTitle(button).hide()
+    
+    @on "AllPanesAddedToPanel", (panel, panes) ->
+      editor = panel.getPaneByName("editor")
+      {codeMirrorEditor} = editor.getActivePane().subViews[0]
+      codeMirrorEditor.getWrapperElement().style.fontSize = "12px"
+      {tabView} = editor
+      tabView.on "PaneAdded", (paneInstance) =>
+        [editor] = paneInstance.getSubViews()
+        editor.on "OpenedAFile", (file, content) =>
+          @makeButtonControls panel
+          
+      tabView.on "PaneDidShow", (tabPane) =>
+        @makeButtonControls panel
+
+  getButtonByTitle: (title) ->
+    panel = @panels[0]
+    return panel.headerButtons[title]
   
-getButtonByTitle = (workspace, title) ->
-  # getButtonByName would be better
-  panel = workspace.panels[0]
-  return panel.headerButtons[title]
+  makeButtonControls: (panel) ->
+    filepath = getActiveFilePath panel
+    return unless filepath
+    filecontent = panel.getPaneByName('editor').getActivePaneContent()
+    
+    controlsList = [
+      ["Test", -> filepath isnt null and filepath.match(".*_test.go")],
+      ["Run", -> filepath isnt null and (filecontent.indexOf 'package main') isnt -1],
+      ["Build", -> filepath.match(".*.go")],
+      ["examplesSelect", -> filepath.match(".*.go")]
+    ]
+    
+    for control in controlsList
+      button = @getButtonByTitle(control[0])
+      if control[1]()
+        button.show()
+      else
+        button.hide()
 
-makeButtonControls = (workspace, panel) ->
-  filepath = getActiveFilePath panel
-  return unless filepath
-  filecontent = panel.getPaneByName('editor').getActivePaneContent()
-  
-  controlsList = [
-    ["Test", -> filepath isnt null and filepath.match(".*_test.go")],
-    ["Run", -> filepath isnt null and (filecontent.indexOf 'package main') isnt -1],
-    ["Build", -> filepath.match(".*.go")],
-    ["examplesSelect", -> filepath.match(".*.go")]
-  ]
-  
-  for control in controlsList
-    button = getButtonByTitle(workspace, control[0])
-    if control[1]()
-      button.show()
-    else
-      button.hide()
-
-goIDE = new CollaborativeWorkspace options
-goIDE.on "PanelCreated", ->
-  hideAtFirstList = ["Test", "Run", "Build", "PlayGolang Share"]
-  for button in hideAtFirstList
-    getButtonByTitle(goIDE, button).hide()
-
-goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
-  editor = panel.getPaneByName("editor")
-  {codeMirrorEditor} = editor.getActivePane().subViews[0]
-  codeMirrorEditor.getWrapperElement().style.fontSize = "12px"
-  {tabView} = editor
-  tabView.on "PaneAdded", (paneInstance) ->
-    [editor] = paneInstance.getSubViews()
-    editor.on "OpenedAFile", (file, content) ->
-      makeButtonControls goIDE, panel
-      
-  tabView.on "PaneDidShow", (tabPane) ->
-    makeButtonControls(goIDE, panel)
-
+goIDE = new GoIDEWorkspace options
 appView.addSubView goIDE
-
-
