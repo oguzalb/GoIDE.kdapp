@@ -22,6 +22,8 @@
       "app": {
         "files": [
           "./app/samples.coffee",
+          "./app/helpers.coffee",
+          "./app/workspace.coffee",
           "./index.coffee"
         ]
       }
