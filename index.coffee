@@ -100,9 +100,10 @@ options =
             if filepath isnt null
               if filepath.match(".*.go")
                 path = filepath.match("^(.+)/[^/]+$")[1]
-                panel.getPaneByName("terminal").runCommand("cd #{path}")
-                panel.getPaneByName("terminal").runCommand("go get -v -d .")
-                panel.getPaneByName("terminal").runCommand("go build #{filepath}")
+                terminal = panel.getPaneByName("terminal")
+                terminal.runCommand("cd #{path}")
+                terminal.runCommand("go get -v -d .")
+                terminal.runCommand("go build #{filepath}")
             else
               console.log("not a test file!")
         }
@@ -246,34 +247,27 @@ getButtonByTitle = (workspace, title) ->
 makeButtonControls = (workspace, panel) ->
   filepath = getActiveFilePath panel
   return unless filepath
-  testButton = getButtonByTitle(workspace, "Test")
-  if filepath isnt null and filepath.match(".*_test.go")
-    testButton.show()
-  else
-    testButton.hide()
   filecontent = panel.getPaneByName('editor').getActivePaneContent()
-  runButton = getButtonByTitle(workspace, "Run")
-  if filepath isnt null and (filecontent.indexOf 'package main') isnt -1
-    runButton.show()
-  else
-    runButton.hide()
-  buildButton = getButtonByTitle(workspace, "Build")
-  if filepath.match(".*.go")
-    buildButton.show()
-  else
-    buildButton.hide()
-  selectBox = getButtonByTitle(workspace, "examplesSelect")
-  if filepath.match(".*.go")
-    buildButton.show()
-  else
-    buildButton.hide()
+  
+  controlsList = [
+    ["Test", -> filepath isnt null and filepath.match(".*_test.go")],
+    ["Run", -> filepath isnt null and (filecontent.indexOf 'package main') isnt -1],
+    ["Build", -> filepath.match(".*.go")],
+    ["examplesSelect", -> filepath.match(".*.go")]
+  ]
+  
+  for control in controlsList
+    button = getButtonByTitle(workspace, control[0])
+    if control[1]()
+      button.show()
+    else
+      button.hide()
 
 goIDE = new CollaborativeWorkspace options
 goIDE.on "PanelCreated", ->
-  getButtonByTitle(goIDE, "Test").hide()
-  getButtonByTitle(goIDE, "Run").hide()
-  getButtonByTitle(goIDE, "Build").hide()
-  getButtonByTitle(goIDE, "PlayGolang Share").hide()
+  hideAtFirstList = ["Test", "Run", "Build", "PlayGolang Share"]
+  for button in hideAtFirstList
+    getButtonByTitle(goIDE, button).hide()
 
 goIDE.on "AllPanesAddedToPanel", (panel, panes) ->
   editor = panel.getPaneByName("editor")
