@@ -21,6 +21,7 @@
     "blocks": {
       "app": {
         "files": [
+          "./app/samples.coffee",
           "./index.coffee"
         ]
       }

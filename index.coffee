@@ -1,34 +1,3 @@
-sampleCodesItems = [
-  ["Select", ""]
-  ["Hello World", "helloworld"],
-  ["Strings", "strings"]
-]
-
-sampleCodesData = {
-  "helloworld": """package main
-
-import (
-  "fmt"
-)
-
-func main() {
-  fmt.Println("Hello world!")
-}""",
-  "strings":"""package main
-
-import (
-  "fmt"
-  "strings"
-)
-
-func main() {
-	fmt.Println(strings.Contains("seafood", "foo"))
-	fmt.Println(strings.Contains("seafood", "bar"))
-	fmt.Println(strings.Contains("seafood", ""))
-	fmt.Println(strings.Contains("", ""))
-}"""
-}
-
 getActiveFilePath = (panel) ->
   activePaneFileData = panel.getPaneByName("editor").getActivePaneFileData()
   return unless activePaneFileData
@@ -204,10 +173,9 @@ options =
           itemClass: KDSelectBox
           title: "examplesSelect"
           defaultValue: sampleCodesItems[0][1]
-          cssClass: 'fr'
+          cssClass: 'fr goide-examples'
           selectOptions: {title: item[0], value: item[1]} for item in sampleCodesItems
           callback: () =>
-            debugger
             selectBox = getButtonByTitle goIDE, "examplesSelect"
             #default
             if selectBox.getValue() is ""
@@ -244,17 +212,18 @@ options =
                 name         : "editor"
                 saveCallback : (panel, workspace, file, content) -> 
                   filepath = getActiveFilePath panel
-                  if filepath isnt null
+                  if filepath isnt null and filepath.match(".*.go$")
                     # TODO we may show the user what is going on, or may be not
                     # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
                     KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
                       makeButtonControls(goIDE, panel)
                       {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
-                      
+                      oldCursor = codeMirrorEditor.getCursor()
                       file = FSHelper.createFileFromPath filepath
                       file.fetchContents (err, content) ->
                         codeMirrorEditor.setValue content
                         codeMirrorEditor.refresh()
+                        codeMirrorEditor.setCursor(oldCursor.line)
                   else
                     console.log("untitled!")
               }
@@ -304,7 +273,6 @@ goIDE.on "PanelCreated", ->
   getButtonByTitle(goIDE, "Test").hide()
   getButtonByTitle(goIDE, "Run").hide()
   getButtonByTitle(goIDE, "Build").hide()
-  getButtonByTitle(goIDE, "Gist Share").hide()
   getButtonByTitle(goIDE, "PlayGolang Share").hide()
 
 goIDE.on "AllPanesAddedToPanel", (panel, panes) ->

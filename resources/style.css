@@ -1,0 +1,11 @@
+.goide-examples {
+  margin-top: 7px;
+  height: 23px;
+  margin-right: 10px;
+}
+
+.goide-examples .title {
+  font-size: 12px;
+  line-height: 24px;
+  padding: 0 20px 0 0;
+}
