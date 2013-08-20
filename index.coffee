@@ -55,10 +55,10 @@ options =
             if filepath isnt null
               if filepath.match(".*.go")
                 path = filepath.match("^(.+)/[^/]+$")[1]
-                terminal = panel.getPaneByName("terminal")
-                terminal.runCommand("cd #{path}")
-                terminal.runCommand("go get -v -d .")
-                terminal.runCommand("go build #{filepath}")
+                terminal = panel.getPaneByName "terminal"
+                terminal.runCommand "cd #{path}"
+                terminal.runCommand "go get -v -d ."
+                terminal.runCommand "go build #{filepath}"
             else
               console.log("not a test file!")
         }
@@ -69,7 +69,7 @@ options =
             filepath = getActiveFilePath panel
             if filepath isnt null
               filecontent = panel.getPaneByName('editor').getActivePaneContent()
-              filename = filepath.match("([^/]*$)")
+              filename = filepath.match "([^/]*$)"
               new KDNotificationView 
                 title: "GoIDE is creating your Gist..."
               createGist filecontent, filename, (err, res)->
@@ -91,7 +91,7 @@ options =
                         window.open res.html_url, "_blank"
               
             else
-              console.log("untitled!")
+              console.log "untitled!"
         }
         {
           title      : "PlayGolang Share"
@@ -100,7 +100,7 @@ options =
             filepath = getActiveFilePath panel
             if filepath isnt null
               filecontent = panel.getPaneByName('editor').getActivePaneContent()
-              filename = filepath.match("([^/]*$)")
+              filename = filepath.match "([^/]*$)"
               new KDNotificationView 
                 title: "GoIDE is creating your code share..."
               createPlayGolangShare filecontent, (err, res)->
@@ -123,7 +123,7 @@ options =
                         window.open url, "_blank"
               
             else
-              console.log("untitled!")
+              console.log "untitled!"
         }
         {
           itemClass: KDSelectBox
@@ -146,7 +146,7 @@ options =
               file.save sampleCodesData[value], (err, res)->
                 return if err
                 editor = goIDE.panels[0].getPaneByName("editor")
-                editor.openFile(file, sampleCodesData[value])
+                editor.openFile file, sampleCodesData[value]
         }
       ]
       layout            : {
@@ -172,16 +172,16 @@ options =
                     # TODO we may show the user what is going on, or may be not
                     # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
                     KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
-                      goIDE.makeButtonControls(panel)
+                      goIDE.makeButtonControls panel
                       {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
                       oldCursor = codeMirrorEditor.getCursor()
                       file = FSHelper.createFileFromPath filepath
                       file.fetchContents (err, content) ->
                         codeMirrorEditor.setValue content
                         codeMirrorEditor.refresh()
-                        codeMirrorEditor.setCursor(oldCursor.line)
+                        codeMirrorEditor.setCursor oldCursor.line
                   else
-                    console.log("untitled!")
+                    console.log "untitled!"
               }
               {
                 type    : "terminal"
