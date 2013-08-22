@@ -11,6 +11,13 @@ class GoIDEWorkspace extends CollaborativeWorkspace
     
     @on "AllPanesAddedToPanel", (panel, panes) ->
       editor = panel.getPaneByName "editor"
+      terminal = panel.getPaneByName "terminal"
+      terminal.webterm.on "WebTermConnected", ->
+        kite    = KD.getSingleton 'kiteController'
+        {nickname} = KD.whoami().profile
+        GOPATH = "/home/#{nickname}/.GoIDE/go"
+        kite.run "mkdir -p ~/.GoIDE/go", (err, res) ->
+          terminal.runCommand "export GOPATH=#{GOPATH}"
       {tabView} = editor
       tabView.on "PaneAdded", (paneInstance) =>
         [editor] = paneInstance.getSubViews()

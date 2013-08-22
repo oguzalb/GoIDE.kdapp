@@ -8,7 +8,9 @@ sampleCodesItems = [
   ["webserver", "webserver"],
   ["goroutines", "goroutines"],
   ["channels", "channels"],
-  ["mongo", "mongo"]
+  ["mongo", "mongo"],
+  ["redis", "redis"],
+  ["sqlite3", "sqlite3"]
 ]
 
 sampleCodesData = {
@@ -187,5 +189,151 @@ func main() {
 
 	fmt.Println("Phone:", result.Phone)
 }
-""", "sudo apt-get install bzr && sudo apt-get install mongodb"]
+""", "sudo apt-get install bzr && sudo apt-get install mongodb"],
+"redis":["""package main
+
+import (
+  "github.com/garyburd/redigo/redis"
+	"github.com/garyburd/redigo/redisx"
+	"log"
+)
+
+type MyStruct struct {
+	A int
+	B string
+}
+
+func main() {
+	c, err := redis.Dial("tcp", ":6379")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	v0 := &MyStruct{1, "hello"}
+
+	_, err = c.Do("HMSET", redisx.AppendStruct([]interface{}{"key"}, v0)...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reply, err := c.Do("HGETALL", "key")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	v1 := &MyStruct{}
+
+	err = redisx.ScanStruct(reply, v1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("v1=%v", v1)
+}""", "sudo apt-get install redis-server"],
+"sqlite3": ["""package main
+
+import (
+  "database/sql"
+	"fmt"
+	_ "github.com/mattn/go-sqlite3"
+	"os"
+)
+
+func main() {
+	os.Remove("./foo.db")
+
+	db, err := sql.Open("sqlite3", "./foo.db")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer db.Close()
+
+	sqls := []string{
+		"create table foo (id integer not null primary key, name text)",
+		"delete from foo",
+	}
+	for _, sql := range sqls {
+		_, err = db.Exec(sql)
+		if err != nil {
+			fmt.Printf("%q: %s", err, sql)
+			return
+		}
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	stmt, err := tx.Prepare("insert into foo(id, name) values(?, ?)")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer stmt.Close()
+	for i := 0; i < 100; i++ {
+		_, err = stmt.Exec(i, fmt.Sprintf("こんにちわ世界%03d", i))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	tx.Commit()
+
+	rows, err := db.Query("select id, name from foo")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var name string
+		rows.Scan(&id, &name)
+		fmt.Println(id, name)
+	}
+	rows.Close()
+
+	stmt, err = db.Prepare("select name from foo where id = ?")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer stmt.Close()
+	var name string
+	err = stmt.QueryRow("3").Scan(&name)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(name)
+
+	_, err = db.Exec("delete from foo")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	_, err = db.Exec("insert into foo(id, name) values(1, 'foo'), (2, 'bar'), (3, 'baz')")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	rows, err = db.Query("select id, name from foo")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var name string
+		rows.Scan(&id, &name)
+		fmt.Println(id, name)
+	}
+	rows.Close()
+
+}
+""", "sudo apt-get install pkg-config sqlite3 && sudo apt-get install libsqlite3-dev"]
 }

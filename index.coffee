@@ -151,7 +151,7 @@ options =
                 sampleDataLength = sampleData.length
                 if sampleDataLength > 1
                   command = sampleData[1]
-                  terminal.runCommand(command)
+                  terminal.runCommand command
         }
       ]
       layout            : {
@@ -171,22 +171,25 @@ options =
               {
                 type         : "tabbedEditor"
                 name         : "editor"
-                saveCallback : (panel, workspace, file, content) -> 
-                  filepath = getActiveFilePath panel
-                  if filepath isnt null and filepath.match(".*.go$")
-                    # TODO we may show the user what is going on, or may be not
-                    # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
-                    KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
-                      goIDE.makeButtonControls panel
-                      {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
-                      oldCursor = codeMirrorEditor.getCursor()
-                      file = FSHelper.createFileFromPath filepath
-                      file.fetchContents (err, content) ->
-                        codeMirrorEditor.setValue content
-                        codeMirrorEditor.refresh()
-                        codeMirrorEditor.setCursor oldCursor.line
-                  else
-                    console.log "untitled!"
+                saveCallback : (panel, workspace, file, content) ->
+                  try
+                    filepath = getActiveFilePath panel
+                    if filepath isnt null and filepath.match(".*.go$")
+                      # TODO we may show the user what is going on, or may be not
+                      # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
+                      KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
+                        goIDE.makeButtonControls panel
+                        {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
+                        oldCursor = codeMirrorEditor.getCursor()
+                        file = FSHelper.createFileFromPath filepath
+                        file.fetchContents (err, content) ->
+                          codeMirrorEditor.setValue content
+                          codeMirrorEditor.refresh()
+                          codeMirrorEditor.setCursor oldCursor.line
+                    else
+                      console.log "untitled!"
+                  catch
+                    
               }
               {
                 type    : "terminal"
