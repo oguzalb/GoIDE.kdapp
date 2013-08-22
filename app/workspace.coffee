@@ -4,17 +4,19 @@ class GoIDEWorkspace extends CollaborativeWorkspace
     @on "PanelCreated", ->
       hideAtFirstList = ["Test", "Run", "Build", "PlayGolang Share"]
       for button in hideAtFirstList
+        editor = @panels[0].getPaneByName "editor"
+        {codeMirrorEditor} = editor.getActivePane().subViews[0]
+        codeMirrorEditor.getWrapperElement().style.fontSize = "12px"
         @getButtonByTitle(button).hide()
     
     @on "AllPanesAddedToPanel", (panel, panes) ->
       editor = panel.getPaneByName "editor"
-      {codeMirrorEditor} = editor.getActivePane().subViews[0]
-      codeMirrorEditor.getWrapperElement().style.fontSize = "12px"
       {tabView} = editor
       tabView.on "PaneAdded", (paneInstance) =>
         [editor] = paneInstance.getSubViews()
         editor.on "OpenedAFile", (file, content) =>
           @makeButtonControls panel
+          editor.codeMirrorEditor.getWrapperElement().style.fontSize = "12px"
           
       tabView.on "PaneDidShow", (tabPane) =>
         @makeButtonControls panel

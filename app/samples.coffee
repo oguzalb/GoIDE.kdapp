@@ -8,10 +8,11 @@ sampleCodesItems = [
   ["webserver", "webserver"],
   ["goroutines", "goroutines"],
   ["channels", "channels"],
+  ["mongo", "mongo"]
 ]
 
 sampleCodesData = {
-  "helloworld": """package main
+  "helloworld": ["""package main
 
 import (
   "fmt"
@@ -19,8 +20,8 @@ import (
 
 func main() {
   fmt.Println("Hello world!")
-}""",
-  "strings":"""package main
+}"""],
+  "strings":["""package main
 
 import (
   "fmt"
@@ -32,8 +33,8 @@ func main() {
 	fmt.Println(strings.Contains("seafood", "bar"))
 	fmt.Println(strings.Contains("seafood", ""))
 	fmt.Println(strings.Contains("", ""))
-}""",
-  "functions": """package main
+}"""],
+  "functions": ["""package main
 
 import "fmt"
 
@@ -57,8 +58,8 @@ func main() {
     v := Vertex{1, 2}
     v.X = 4
     fmt.Println(v.X)
-}""",
-  "range":"""package main
+}"""],
+  "range":["""package main
 
 import "fmt"
 
@@ -68,8 +69,8 @@ func main() {
     for i, v := range pow {
         fmt.Printf("2**%d = %d\n", i, v)
     }
-}""",
-  "methods":"""package main
+}"""],
+  "methods":["""package main
 
 import (
     "fmt"
@@ -88,8 +89,8 @@ func (f MyFloat) Abs() float64 {
 func main() {
     f := MyFloat(-math.Sqrt2)
     fmt.Println(f.Abs())
-}""",
-  "webserver":"""package main
+}"""],
+  "webserver":["""package main
 
 import (
     "fmt"
@@ -107,8 +108,8 @@ func (h Hello) ServeHTTP(
 func main() {
     var h Hello
     http.ListenAndServe("localhost:4000", h)
-}""",
-"goroutines":"""package main
+}"""],
+"goroutines":["""package main
 
 import (
     "fmt"
@@ -125,8 +126,8 @@ func say(s string) {
 func main() {
     go say("world")
     say("hello")
-}""",
-"channels":"""package main
+}"""],
+"channels":["""package main
 
 import "fmt"
 
@@ -147,5 +148,44 @@ func main() {
     x, y := <-c, <-c // receive from c
 
     fmt.Println(x, y, x+y)
-}"""
+}"""],
+"mongo":["""package main
+
+import (
+  "fmt"
+	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
+)
+
+type Person struct {
+	Name  string
+	Phone string
+}
+
+func main() {
+	session, err := mgo.Dial("server1.example.com,server2.example.com")
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	// Optional. Switch the session to a monotonic behavior.
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("test").C("people")
+	err = c.Insert(&Person{"Ale", "+55 53 8116 9639"},
+		&Person{"Cla", "+55 53 8402 8510"})
+	if err != nil {
+		panic(err)
+	}
+
+	result := Person{}
+	err = c.Find(bson.M{"name": "Ale"}).One(&result)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Phone:", result.Phone)
+}
+""", "sudo apt-get install bzr && sudo apt-get install mongodb"]
 }

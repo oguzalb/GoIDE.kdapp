@@ -1,7 +1,6 @@
 getActiveFilePath = (panel) ->
   activePaneFileData = panel.getPaneByName("editor").getActivePaneFileData()
   return unless activePaneFileData
-  
   {path} = activePaneFileData
   return if path.indexOf "localfile:/" isnt 0 then path.replace /[^/]*/, "" else null
 
@@ -143,10 +142,16 @@ options =
             kite.run "mkdir -p #{examplesPath}", (err, res) ->
               sampleFileName = examplesPath + value + ".go"
               file = FSHelper.createFileFromPath sampleFileName
-              file.save sampleCodesData[value], (err, res)->
+              sampleData = sampleCodesData[value]
+              file.save sampleData[0], (err, res)->
                 return if err
                 editor = goIDE.panels[0].getPaneByName("editor")
-                editor.openFile file, sampleCodesData[value]
+                terminal = goIDE.panels[0].getPaneByName("terminal")
+                editor.openFile file, sampleData[0]
+                sampleDataLength = sampleData.length
+                if sampleDataLength > 1
+                  command = sampleData[1]
+                  terminal.runCommand(command)
         }
       ]
       layout            : {
