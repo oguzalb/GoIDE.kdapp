@@ -88,9 +88,6 @@ options =
                       cssClass: "modal-clean-green"
                       callback: ->
                         window.open res.html_url, "_blank"
-              
-            else
-              console.log "untitled!"
         }
         {
           title      : "PlayGolang Share"
@@ -120,9 +117,6 @@ options =
                       cssClass: "modal-clean-green"
                       callback: ->
                         window.open url, "_blank"
-              
-            else
-              console.log "untitled!"
         }
         {
           itemClass: KDSelectBox
@@ -186,10 +180,8 @@ options =
                           codeMirrorEditor.setValue content
                           codeMirrorEditor.refresh()
                           codeMirrorEditor.setCursor oldCursor.line
-                    else
-                      console.log "untitled!"
-                  catch
-                    
+                  catch ex
+                    console.log ex
               }
               {
                 type    : "terminal"

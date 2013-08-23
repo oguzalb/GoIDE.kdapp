@@ -38,10 +38,11 @@ class GoIDEWorkspace extends CollaborativeWorkspace
     filecontent = panel.getPaneByName('editor').getActivePaneContent()
     
     controlsList = [
-      ["Test", -> filepath isnt null and filepath.match ".*_test.go"],
+      ["Test", -> filepath?.match ".*_test.go"],
       ["Run", -> filepath isnt null and (filecontent.indexOf 'package main') isnt -1],
-      ["Build", -> filepath.match ".*.go"],
-      ["examplesSelect", -> filepath.match ".*.go"]
+      ["Build", -> filepath?.match ".*.go"],
+      ["examplesSelect", -> filepath?.match ".*.go"]
+      ["Gist Share", -> filepath?.match ".*.go"]
     ]
     
     for control in controlsList
