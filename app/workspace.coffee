@@ -1,6 +1,7 @@
 class GoIDEWorkspace extends CollaborativeWorkspace
   constructor: (options, data) ->
     super options, data
+    @terminalToggled = false
     @on "PanelCreated", ->
       hideAtFirstList = ["Test", "Run", "Build", "PlayGolang Share"]
       for button in hideAtFirstList
@@ -51,3 +52,12 @@ class GoIDEWorkspace extends CollaborativeWorkspace
         button.show()
       else
         button.hide()
+
+  toggleTerminal: (visible) ->
+    splitView = goIDE.panels[0].layoutContainer
+    if @terminalToggled or visible ? !!visible
+      splitView.subViews[0].resizePanel("40%", 2)
+      @terminalToggled = false
+    else
+      splitView.subViews[0].resizePanel("0%", 2)
+      @terminalToggled = true

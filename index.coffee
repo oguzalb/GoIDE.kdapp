@@ -32,8 +32,6 @@ options =
               filecontent = panel.getPaneByName('editor').getActivePaneContent()
               if (filecontent.indexOf 'package main') isnt -1 
                 panel.getPaneByName("terminal").runCommand("go run #{filepath}")
-            else
-              console.log("untitled!")
         }
         {
           title      : "Test"
@@ -60,6 +58,12 @@ options =
                 terminal.runCommand "go build #{filepath}"
             else
               console.log("not a test file!")
+        }
+        {
+          title      : "Terminal"
+          cssClass   : "clean-gray"
+          callback   : (panel, workspace) ->
+            workspace.toggleTerminal()
         }
         {
           title      : "Gist Share"
@@ -140,54 +144,54 @@ options =
               file.save sampleData[0], (err, res)->
                 return if err
                 editor = goIDE.panels[0].getPaneByName("editor")
+                goIDE.toggleTerminal(true)
                 terminal = goIDE.panels[0].getPaneByName("terminal")
                 editor.openFile file, sampleData[0]
                 sampleDataLength = sampleData.length
-                if sampleDataLength > 1
-                  command = sampleData[1]
-                  terminal.runCommand command
+                if sampleData.length is 2 then kite.run sampleData[1].requirementQuery, (err, res) ->
+                  requirements = sampleData[1]
+                  console.log err, res
+                  if err is null
+                    if !(res.match requirements.requirementCheck)
+                      command = requirements.fullfill
+                      terminal.runCommand command
+                else if sampleData[1].requirementQuery
+                  command = sampleData[1].fullfill
+                  terminal.runCommand command                  
         }
       ]
       layout            : {
         direction       : "vertical"
-        sizes           : [ "20%", null ]
+        sizes           : [ "20%", "40%", "40%" ]
         views           : [
           {
             type        : "finder"
             name        : "finder"
           }
           {
-            type        : "split"
-            options     :
-              direction : "vertical"
-              sizes     : ["50%", null]
-            views       : [
-              {
-                type         : "tabbedEditor"
-                name         : "editor"
-                saveCallback : (panel, workspace, file, content) ->
-                  try
-                    filepath = getActiveFilePath panel
-                    if filepath isnt null and filepath.match(".*.go$")
-                      # TODO we may show the user what is going on, or may be not
-                      # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
-                      KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
-                        goIDE.makeButtonControls panel
-                        {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
-                        oldCursor = codeMirrorEditor.getCursor()
-                        file = FSHelper.createFileFromPath filepath
-                        file.fetchContents (err, content) ->
-                          codeMirrorEditor.setValue content
-                          codeMirrorEditor.refresh()
-                          codeMirrorEditor.setCursor oldCursor.line
-                  catch ex
-                    console.log ex
-              }
-              {
-                type    : "terminal"
-                name    : "terminal"
-              }
-            ]
+            type         : "tabbedEditor"
+            name         : "editor"
+            saveCallback : (panel, workspace, file, content) ->
+              filepath = getActiveFilePath panel
+              if filepath isnt null and filepath.match(".*.go$")
+                try
+                  # TODO we may show the user what is going on, or may be not
+                  # panel.getPaneByName("terminal").runCommand "go fmt #{filepath}"
+                  KD.getSingleton("vmController").run "go fmt #{filepath}", (err, res) ->
+                    goIDE.makeButtonControls panel
+                    {codeMirrorEditor} = panel.getPaneByName("editor").getActivePane().subViews[0]
+                    oldCursor = codeMirrorEditor.getCursor()
+                    file = FSHelper.createFileFromPath filepath
+                    file.fetchContents (err, content) ->
+                      codeMirrorEditor.setValue content
+                      codeMirrorEditor.refresh()
+                      codeMirrorEditor.setCursor oldCursor.line
+                catch ex
+                  console.log ex
+          }
+          {
+            type    : "terminal"
+            name    : "terminal"
           }
         ]
       }

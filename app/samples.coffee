@@ -1,3 +1,9 @@
+class Requirements
+  constructor: (options) ->
+    {@requirementQuery} = options
+    {@requirementCheck} = options
+    {@fullfill} = options
+
 sampleCodesItems = [
   ["Select", ""]
   ["Hello World", "helloworld"],
@@ -46,8 +52,8 @@ func add(x int, y int) int {
 
 func main() {
     fmt.Println(add(42, 13))
-}""",
-  "structs":"""package main
+}"""],
+  "structs":["""package main
 
 import "fmt"
 
@@ -189,7 +195,12 @@ func main() {
 
 	fmt.Println("Phone:", result.Phone)
 }
-""", "sudo apt-get install bzr && sudo apt-get install mongodb"],
+""",
+new Requirements
+  requirementQuery: "dpkg -s bzr mongodb"
+  requirementCheck: /Status: install ok[\s\S]*Status: install ok/,
+  fullfill: "sudo apt-get install bzr && sudo apt-get install mongodb"
+],
 "redis":["""package main
 
 import (
@@ -228,7 +239,11 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("v1=%v", v1)
-}""", "sudo apt-get install redis-server"],
+}""",
+new Requirements
+    requirementQuery: "dpkg -s redis-server"
+    requirementCheck: /Status: install ok/
+    fullfill: "sudo apt-get install redis-server"],
 "sqlite3": ["""package main
 
 import (
@@ -271,7 +286,7 @@ func main() {
 		return
 	}
 	defer stmt.Close()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 4; i++ {
 		_, err = stmt.Exec(i, fmt.Sprintf("こんにちわ世界%03d", i))
 		if err != nil {
 			fmt.Println(err)
@@ -335,5 +350,11 @@ func main() {
 	rows.Close()
 
 }
-""", "sudo apt-get install pkg-config sqlite3 && sudo apt-get install libsqlite3-dev"]
+""",
+  new Requirements
+    requirementQuery: "dpkg -s pkg-config sqlite3 libsqlite3-dev"
+    requirementCheck: /Status: install ok[\s\S]*Status: install ok[\s\S]*Status: install ok/
+    fullfill: "sudo apt-get install pkg-config sqlite3 && sudo apt-get install libsqlite3-dev"
+  ]
 }
+
