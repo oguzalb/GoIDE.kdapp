@@ -3,7 +3,7 @@ class GoIDEWorkspace extends CollaborativeWorkspace
     super options, data
     @terminalToggled = false
     @on "PanelCreated", ->
-      hideAtFirstList = ["Test", "Run", "Build", "PlayGolang Share"]
+      hideAtFirstList = ["Test", "Run", "Build"]
       for button in hideAtFirstList
         editor = @panels[0].getPaneByName "editor"
         {codeMirrorEditor} = editor.getActivePane().subViews[0]

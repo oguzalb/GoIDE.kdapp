@@ -41,8 +41,6 @@ options =
             if filepath isnt null
               if filepath.match(".*_test.go")
                 panel.getPaneByName("terminal").runCommand("go test #{filepath}")
-            else
-              console.log("not a test file!")
         }
         {
           title      : "Build"
@@ -56,8 +54,6 @@ options =
                 terminal.runCommand "cd #{path}"
                 terminal.runCommand "go get -v -d ."
                 terminal.runCommand "go build #{filepath}"
-            else
-              console.log("not a test file!")
         }
         {
           title      : "Terminal"
@@ -94,35 +90,6 @@ options =
                         window.open res.html_url, "_blank"
         }
         {
-          title      : "PlayGolang Share"
-          cssClass   : "clean-gray"
-          callback   : (panel, workspace) =>
-            filepath = getActiveFilePath panel
-            if filepath isnt null
-              filecontent = panel.getPaneByName('editor').getActivePaneContent()
-              filename = filepath.match "([^/]*$)"
-              new KDNotificationView 
-                title: "GoIDE is creating your code share..."
-              createPlayGolangShare filecontent, (err, res)->
-                if err
-                  new KDNotificationView 
-                    title: "An error occured while creating code share, try again."
-                url = "http://play.golang.org/p/" + res
-                modal = new KDModalView
-                  overlay : yes
-                  title     : "Your code share is ready!"
-                  content   : """
-                                  <div class='modalformline'>
-                                    <p><b>#{url}</b></p>
-                                  </div>
-                              """
-                  buttons     :
-                    "Open Play Golang Share":
-                      cssClass: "modal-clean-green"
-                      callback: ->
-                        window.open url, "_blank"
-        }
-        {
           itemClass: KDSelectBox
           title: "examplesSelect"
           defaultValue: sampleCodesItems[0][1]
@@ -150,7 +117,6 @@ options =
                 sampleDataLength = sampleData.length
                 if sampleData.length is 2 then kite.run sampleData[1].requirementQuery, (err, res) ->
                   requirements = sampleData[1]
-                  console.log err, res
                   if err is null
                     if !(res.match requirements.requirementCheck)
                       command = requirements.fullfill
