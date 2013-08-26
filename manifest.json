@@ -24,6 +24,7 @@
           "./app/samples.coffee",
           "./app/helpers.coffee",
           "./app/workspace.coffee",
+          "./app/settingsmanager.coffee",
           "./index.coffee"
         ]
       }

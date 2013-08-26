@@ -24,13 +24,55 @@ options =
             workspace.showJoinModal()
         }
         {
+          title      : "Settings"
+          cssClass   : "cupid-green join-button"
+          callback   : (panel, workspace) =>
+            filepath = getActiveFilePath goIDE.panels[0]
+            settingsManager = new SettingsManager filepath
+            modal          = new KDModalView
+              title        : "Flags"
+              content      : "Set flags for this file"
+              overlay      : yes
+              cssClass     : "workspace-modal join-modal"
+              width        : 500
+              buttons      :
+                Set       :
+                  title    : "Set"
+                  cssClass : "modal-clean-green"
+                  callback : (args...) ->
+                    if buildFlagsInput?
+                      settingsManager.setConfig(filepath, "buildFlags", buildFlagsInput.getValue())
+                    if testFlagsInput?
+                      settingsManager.setConfig(filepath, "testFlags", testFlagsInput.getValue())
+                    settingsManager.saveConfigFile()
+                    modal.destroy()
+                Close      :
+                  title    : "Close"
+                  cssClass : "modal-cancel"
+                  callback : -> modal.destroy()
+            settingsManager.ready =>
+              modal.addSubView @buildFlagsInput = new KDHitEnterInputView
+                type         : "text"
+                label        : new KDLabelView
+                  title: "Build Flags"
+                placeholder  : "Paste the flags to be used with build"
+                defaultValue : settingsManager.getSetting 'buildFlags'
+                callback     : =>
+              if filepath?.match ".*_test.go"
+                modal.addSubView @testFlagsInput = new KDHitEnterInputView
+                  type         : "text"
+                  placeholder  : "Paste the flags to be used with test"
+                  defaultValue : settingsManager.getSetting 'testFlags'
+                  callback     : =>
+        }
+        {
           title      : "Run"
           cssClass   : "clean-gray"
           callback   : (panel, workspace) =>
             filepath = getActiveFilePath panel
             if filepath isnt null
               filecontent = panel.getPaneByName('editor').getActivePaneContent()
-              if (filecontent.indexOf 'package main') isnt -1 
+              if (filecontent.indexOf 'package main') isnt -1
                 panel.getPaneByName("terminal").runCommand("go run #{filepath}")
         }
         {
@@ -40,7 +82,10 @@ options =
             filepath = getActiveFilePath panel
             if filepath isnt null
               if filepath.match(".*_test.go")
-                panel.getPaneByName("terminal").runCommand("go test #{filepath}")
+                settingsManager = new SettingsManager filepath
+                settingsManager.ready ->
+                  testFlags = settingsManager.getSetting("testFlags") or ""
+                  panel.getPaneByName("terminal").runCommand("go test #{testFlags} #{filepath}")
         }
         {
           title      : "Build"
@@ -53,7 +98,10 @@ options =
                 terminal = panel.getPaneByName "terminal"
                 terminal.runCommand "cd #{path}"
                 terminal.runCommand "go get -v -d ."
-                terminal.runCommand "go build #{filepath}"
+                settingsManager = new SettingsManager filepath
+                settingsManager.ready ->
+                  buildFlags = settingsManager.getSetting("buildFlags") or ""
+                  terminal.runCommand "go build #{buildFlags} #{filepath}"
         }
         {
           title      : "Terminal"

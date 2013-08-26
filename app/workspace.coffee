@@ -3,7 +3,7 @@ class GoIDEWorkspace extends CollaborativeWorkspace
     super options, data
     @terminalToggled = false
     @on "PanelCreated", ->
-      hideAtFirstList = ["Test", "Run", "Build"]
+      hideAtFirstList = ["Test", "Run", "Build", "Settings"]
       for button in hideAtFirstList
         editor = @panels[0].getPaneByName "editor"
         {codeMirrorEditor} = editor.getActivePane().subViews[0]
@@ -44,6 +44,7 @@ class GoIDEWorkspace extends CollaborativeWorkspace
       ["Build", -> filepath?.match ".*.go"],
       ["examplesSelect", -> filepath?.match ".*.go"]
       ["Gist Share", -> filepath?.match ".*.go"]
+      ["Settings", -> filepath?.match ".*.go"]
     ]
     
     for control in controlsList
