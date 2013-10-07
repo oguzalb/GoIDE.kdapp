@@ -11,11 +11,9 @@ class GoIDEWorkspace extends CollaborativeWorkspace
         @getButtonByTitle(button).hide()
     
     @on "AllPanesAddedToPanel", (panel, panes) ->
-      console.log "allpanesadded"
       editor = panel.getPaneByName "editor"
       terminal = panel.getPaneByName "terminal"
       terminal.webterm.on "WebTermConnected", ->
-        console.log "webtermconnected"
         kite    = KD.getSingleton 'kiteController'
         {nickname} = KD.whoami().profile
         GOPATH = "/home/#{nickname}/.GoIDE/go"

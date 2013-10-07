@@ -163,14 +163,13 @@ options =
                 terminal = goIDE.panels[0].getPaneByName("terminal")
                 editor.openFile file, sampleData[0]
                 sampleDataLength = sampleData.length
+                console.log(sampleData)
                 if sampleData.length is 2 then kite.run sampleData[1].requirementQuery, (err, res) ->
                   requirements = sampleData[1]
-                  if err is null
-                    if res.match(requirements.requirementCheck) isnt null
-                      console.log requirements.fullfill
-                      command = requirements.fullfill
-                      terminal.runCommand command
-                else if sampleData[1].requirementQuery
+                  if err isnt null or res.match(requirements.requirementCheck) is null
+                    command = requirements.fullfill
+                    terminal.runCommand command
+                else if sampleData[1]?.requirementQuery
                   command = sampleData[1].fullfill
                   terminal.runCommand command                  
         }
